@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id            String                   @id @default(cuid())
+  name          String
+  kind          String
+  grades        String
+  city          String
+  emailDomain   String                   @unique
+  distanceMiles Float
+  createdAt     DateTime                 @default(now())
+  users         User[]
+  invites       Invite[]
+  polls         Poll[]
+  applications  AmbassadorApplication[]
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  schoolId          String
+  school            School    @relation(fields: [schoolId], references: [id])
+  emailVerifiedAt   DateTime?
+  displayName       String?
+  handle            String?   @unique
+  grade             Int?
+  dateOfBirth       String
+  avatarEmoji       String    @default("🍋")
+  bio               String    @default("")
+  traits            String    @default("")
+  clubs             String    @default("")
+  points            Int       @default(0)
+  gems              Int       @default(80)
+  stars             Int       @default(30)
+  streak            Int       @default(0)
+  lastActiveOn      String?
+  role              String    @default("student")
+  directoryOptIn    Boolean   @default(false)
+  allowAnonymous    Boolean   @default(true)
+  autopilotOptIn    Boolean   @default(false)
+  memoryOptIn       Boolean   @default(false)
+  sleepStartHour    Int       @default(22)
+  sleepEndHour      Int       @default(7)
+  dailySpendCap     Int?
+  spentToday        Int       @default(0)
+  spendDay          String?
+  onboardingStep    String    @default("profile")
+  parentEmail       String?
+  parentalConsentAt DateTime?
+  suspendedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  deletedAt         DateTime?
+
+  sessions       Session[]
+  consents       ParentalConsent[]
+  memories       AvatarMemory[]
+  stats          SocialStat[]          @relation("StatOwner")
+  friendships    Friendship[]          @relation("FriendOwner")
+  friendOf       Friendship[]          @relation("FriendTarget")
+  crushes        Crush[]               @relation("CrushOwner")
+  crushedBy      Crush[]               @relation("CrushTarget")
+  blocksMade     Block[]               @relation("BlockOwner")
+  blocksReceived Block[]               @relation("BlockTarget")
+  feed           FeedEvent[]           @relation("FeedOwner")
+  feedMentions   FeedEventPerson[]
+  giftsSent      GiftSend[]            @relation("GiftSender")
+  giftsReceived  GiftSend[]            @relation("GiftRecipient")
+  polls          Poll[]
+  pollOptions    PollOption[]
+  votes          PollVote[]
+  comments       PollComment[]
+  pointsLedger   PointEvent[]
+  boosts         ProfileBoost[]
+  purchases      Purchase[]
+  reportsMade    Report[]              @relation("Reporter")
+  invites        Invite[]
+  application    AmbassadorApplication?
+  rateLimits     RateLimitBucket[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model VerificationCode {
+  id          String    @id @default(cuid())
+  email       String
+  schoolId    String
+  codeHash    String
+  dateOfBirth String?
+  parentEmail String?
+  inviteCode  String?
+  purpose     String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model ParentalConsent {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentEmail String
+  tokenHash   String    @unique
+  status      String    @default("pending")
+  expiresAt   DateTime
+  approvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model EmailMessage {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  user      User     @relation("FriendOwner", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendTarget", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+}
+
+model Crush {
+  id        String   @id @default(cuid())
+  userId    String
+  crushId   String
+  user      User     @relation("CrushOwner", fields: [userId], references: [id], onDelete: Cascade)
+  crush     User     @relation("CrushTarget", fields: [crushId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, crushId])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  blocker   User     @relation("BlockOwner", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("BlockTarget", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+}
+
+model AvatarMemory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  content   String
+  source    String
+  createdAt DateTime @default(now())
+}
+
+model SocialStat {
+  id         String @id @default(cuid())
+  userId     String
+  otherId    String
+  user       User   @relation("StatOwner", fields: [userId], references: [id], onDelete: Cascade)
+  friendship Int    @default(20)
+  interest   String @default("Low")
+
+  @@unique([userId, otherId])
+}
+
+model FeedEvent {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation("FeedOwner", fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  title     String
+  body      String
+  choices   String
+  status    String            @default("open")
+  chosenKey String?
+  source    String
+  romantic  Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  people    FeedEventPerson[]
+}
+
+model FeedEventPerson {
+  eventId String
+  userId  String
+  event   FeedEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+}
+
+model GiftSend {
+  id               String   @id @default(cuid())
+  fromId           String
+  toId             String
+  from             User     @relation("GiftSender", fields: [fromId], references: [id], onDelete: Cascade)
+  to               User     @relation("GiftRecipient", fields: [toId], references: [id], onDelete: Cascade)
+  giftKey          String
+  anonymous        Boolean
+  message          String   @default("")
+  gems             Int
+  recipientEventId String?
+  senderEventId    String?
+  createdAt        DateTime @default(now())
+}
+
+model Poll {
+  id        String        @id @default(cuid())
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School        @relation(fields: [schoolId], references: [id])
+  question  String
+  category  String
+  createdAt DateTime      @default(now())
+  options   PollOption[]
+  comments  PollComment[]
+}
+
+model PollOption {
+  id     String     @id @default(cuid())
+  pollId String
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label  String
+  userId String?
+  user   User?      @relation(fields: [userId], references: [id])
+  votes  PollVote[]
+}
+
+model PollVote {
+  id       String     @id @default(cuid())
+  optionId String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId   String
+  voter    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollId   String
+
+  @@unique([pollId, userId])
+  @@unique([optionId, userId])
+}
+
+model PollComment {
+  id        String   @id @default(cuid())
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model PointEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points    Int
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model ProfileBoost {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier     String
+  stars    Int
+  startsAt DateTime
+  endsAt   DateTime
+}
+
+model Purchase {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sku         String
+  amountCents Int
+  provider    String
+  providerRef String
+  status      String
+  createdAt   DateTime @default(now())
+}
+
+model Report {
+  id         String    @id @default(cuid())
+  reporterId String
+  reporter   User      @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType String
+  targetId   String
+  reason     String
+  status     String    @default("open")
+  resolution String    @default("")
+  createdAt  DateTime  @default(now())
+  resolverId String?
+  resolvedAt DateTime?
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  inviterId String
+  inviter   User     @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  uses      Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model AmbassadorApplication {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  grade     Int
+  pitch     String   @default("")
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}
+
+model RateLimitBucket {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  windowKey String
+  count     Int    @default(0)
+
+  @@unique([userId, action, windowKey])
+}
+
+model SchoolRequest {
+  id           String   @id @default(cuid())
+  name         String
+  city         String
+  domain       String
+  contactEmail String
+  createdAt    DateTime @default(now())
+}
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  email     String
+  body      String
+  createdAt DateTime @default(now())
+}
