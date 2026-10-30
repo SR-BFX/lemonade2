@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 12% 8%, #fff4b0 0 18px, transparent 19px),
+    radial-gradient(circle at 88% 16%, #ffe566 0 14px, transparent 15px),
+    radial-gradient(circle at 70% 90%, #fff1a8 0 22px, transparent 23px),
+    #ffe9a8;
+}
+
+.phone {
+  min-height: 100dvh;
+  background: #fffdf8;
+}
+
+.btn-lemon {
+  @apply inline-flex w-full items-center justify-center rounded-full bg-gradient-to-b from-lemon-200 to-lemon-300 px-4 py-3 text-center text-base font-extrabold text-ink shadow-lemon transition active:translate-y-0.5 active:shadow-none;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-full border-2 border-lemon-300 bg-white px-3 py-1.5 text-sm font-extrabold text-ink;
+}
+
+.btn-solid {
+  @apply inline-flex items-center justify-center rounded-full bg-ink px-3 py-1.5 text-sm font-extrabold text-white;
+}
+
+.card {
+  @apply rounded-3xl border-2 border-lemon-200 bg-white p-4 shadow-sm;
+}
+
+.field {
+  @apply w-full rounded-2xl border-2 border-lemon-200 bg-white px-3 py-3 text-base font-semibold outline-none ring-leaf focus:ring-2;
+}
+
+.label {
+  @apply mb-1 block text-sm font-extrabold;
+}
+
+.nav-link {
+  @apply flex flex-1 flex-col items-center gap-0.5 text-[11px] font-extrabold text-ink/50;
+}
+
+.nav-link[data-active="true"] {
+  @apply text-ink;
+}
